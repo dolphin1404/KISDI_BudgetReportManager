@@ -14,7 +14,7 @@ def format_number(num):
     if isinstance(num, float) and num.is_integer():
         return str(int(num))
     elif isinstance(num, (int, float)):
-        return f"{num:,}"
+        return f"{num:,.0f}"
     else:
         return ""
 
@@ -42,11 +42,11 @@ def make_expression(item_name, unit_price, qty, qty_unit, freq1, freq1_unit, fre
     expr_str = "×".join(parts)
     amount_str = int(amount)
 
-    return f"- {item_name} : {expr_str}={amount_str}"
+    return f"{item_name} : {expr_str}={amount_str}"
 
 def parse_excel(file_path):
     """
-    엑셀 파일을 파싱하여 중분류와 세부항목을 추출
+    엑셀 파일을 파싱하여 중분류와 세부항목을 추출합니다.
     """
     try:
         df = pd.read_excel(file_path, header=None)
@@ -103,14 +103,12 @@ def parse_excel(file_path):
         # 항목 세부정보 가져오기
         item_name = str(row["항목명"]).strip()
 
-        if item_name.startswith("-"):
-            # 이전 항목명 상속
-            if last_main_item is not None:
-                item_name = last_main_item
+        # "-"로 시작하는 항목명도 그대로 사용하도록 수정
+        # if item_name.startswith("-"):
+        #    if last_main_item is not None:
+        #        item_name = last_main_item
 
-        else:
-            # 새로운 주요 항목으로 설정
-            last_main_item = item_name
+        last_main_item = item_name  # 현재 항목을 마지막 주요 항목으로 설정
 
         unit_price = row["단가"]
         qty = row["갯수"]
@@ -149,6 +147,7 @@ def parse_excel(file_path):
         })
 
     return results
+
 
 def build_final_report(parsed_list):
     """
