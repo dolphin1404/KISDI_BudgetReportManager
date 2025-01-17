@@ -180,7 +180,7 @@ class MyApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("예산 보고서 추출기")
-        self.geometry("1000x700")
+        self.geometry("1100x700")
         
         # 파일 경로 표시
         lbl_file = tk.Label(self, text="엑셀 파일 경로:")
