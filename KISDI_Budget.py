@@ -143,7 +143,7 @@ def parse_excel(file_path):
     results = []
     for cat, info in group_dict.items():
         total = info["total"]
-        total_val = int(total) if total != 0 else ""
+        total_val = add_commas(int(total)) if total != 0 else ""
         results.append({
             "구분": cat,
             "내용": "\n".join(info["items"]),
@@ -166,7 +166,7 @@ def build_final_report(parsed_list):
         amount = item["금액"]  # e.g., 500 or ""
 
         # If amount is not empty, format with commas
-        amount_str = add_commas(amount)
+        amount_str = amount
 
         # Combine into desired format
         line = f"{cat} | {content} | {amount_str}"
@@ -176,7 +176,6 @@ def build_final_report(parsed_list):
     report_text = "\n\n".join(lines)
     return report_text
 
-# ------------------ GUI ------------------ #
 # ------------------ GUI ------------------ #
 class MyApp(tk.Tk):
     def __init__(self):
@@ -285,7 +284,7 @@ class MyApp(tk.Tk):
                 for idx, line in enumerate(lines):
                     if idx == 0:
                         # 첫 번째 항목과 함께 중분류 표시
-                        self.tree.insert("", "end", values=(cat, line, add_commas(amt)))
+                        self.tree.insert("", "end", values=(cat, line, amt))
                     else:
                         # 이후 항목은 중분류 없이 내용과 금액만 표시
                         self.tree.insert("", "end", values=("", line, ""))
