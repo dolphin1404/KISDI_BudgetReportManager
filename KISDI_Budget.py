@@ -1,18 +1,20 @@
 import sys
 import io
 
-sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
+#sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
+#sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 import pandas as pd
 import re
 
-def format_number(num):
-    """숫자를 포맷하는 함수."""
+def add_commas(num: float) -> str:
+    """정수나 실수를 천 단위마다 콤마로 구분하여 문자열로 반환합니다."""
+    # 실수이면서 소수점 이하가 0이라면 정수로 변환
     if isinstance(num, float) and num.is_integer():
-        return str(int(num))
+        return f"{int(num):,}"
+    # 정수 혹은 일반 실수라면 그대로 콤마를 붙임
     elif isinstance(num, (int, float)):
         return f"{num:,}"
     else:
@@ -22,7 +24,7 @@ def make_expression(item_name, unit_price, qty, qty_unit, freq1, freq1_unit, fre
     """항목의 상세 내역을 조합합니다."""
     parts = []
     if pd.notna(unit_price):
-        parts.append(str(format_number(unit_price)))
+        parts.append(str(add_commas(unit_price)))
     if pd.notna(qty) and qty != 0:
         if pd.notna(qty_unit):
             parts.append(f"{int(qty)}{qty_unit}")
@@ -30,17 +32,17 @@ def make_expression(item_name, unit_price, qty, qty_unit, freq1, freq1_unit, fre
             parts.append(str(qty))
     if pd.notna(freq1) and freq1 != 0:
         if pd.notna(freq1_unit):
-            parts.append(f"{format_number(freq1)}{freq1_unit}")
+            parts.append(f"{add_commas(freq1)}{freq1_unit}")
         else:
-            parts.append(str(format_number(freq1)))
+            parts.append(str(add_commas(freq1)))
     if pd.notna(freq2) and freq2 != 0:
         if pd.notna(freq2_unit):
-            parts.append(f"{format_number(freq2)}{freq2_unit}")
+            parts.append(f"{add_commas(freq2)}{freq2_unit}")
         else:
-            parts.append(str(format_number(freq2)))
+            parts.append(str(add_commas(freq2)))
 
     expr_str = "×".join(parts)
-    amount_str = int(amount)
+    amount_str = format(int(amount), ",d")
 
     return f"- {item_name} : {expr_str}={amount_str}"
 
@@ -141,7 +143,7 @@ def parse_excel(file_path):
     results = []
     for cat, info in group_dict.items():
         total = info["total"]
-        total_val = int(total) if total != 0 else ""
+        total_val = add_commas(int(total)) if total != 0 else ""
         results.append({
             "구분": cat,
             "내용": "\n".join(info["items"]),
@@ -164,7 +166,7 @@ def build_final_report(parsed_list):
         amount = item["금액"]  # e.g., 500 or ""
 
         # If amount is not empty, format with commas
-        amount_str = format_number(amount)
+        amount_str = amount
 
         # Combine into desired format
         line = f"{cat} | {content} | {amount_str}"
@@ -174,7 +176,6 @@ def build_final_report(parsed_list):
     report_text = "\n\n".join(lines)
     return report_text
 
-# ------------------ GUI ------------------ #
 # ------------------ GUI ------------------ #
 class MyApp(tk.Tk):
     def __init__(self):
@@ -283,7 +284,7 @@ class MyApp(tk.Tk):
                 for idx, line in enumerate(lines):
                     if idx == 0:
                         # 첫 번째 항목과 함께 중분류 표시
-                        self.tree.insert("", "end", values=(cat, line, format_number(amt)))
+                        self.tree.insert("", "end", values=(cat, line, amt))
                     else:
                         # 이후 항목은 중분류 없이 내용과 금액만 표시
                         self.tree.insert("", "end", values=("", line, ""))
