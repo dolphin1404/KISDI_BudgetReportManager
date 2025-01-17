@@ -1,4 +1,5 @@
 import sys
+import os
 import io
 
 #sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
@@ -181,7 +182,7 @@ class MyApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("예산 보고서 추출기")
-        self.geometry("1000x700")
+        self.geometry("930x700")
         
         # 파일 경로 표시
         lbl_file = tk.Label(self, text="엑셀 파일 경로:")
@@ -216,13 +217,13 @@ class MyApp(tk.Tk):
         self.tree.heading("col_amount", text="금액")
         
         self.tree.column("col_cat", width=200, anchor="w")
-        self.tree.column("col_desc", width=600, anchor="w")
-        self.tree.column("col_amount", width=150, anchor="e")
+        self.tree.column("col_desc", width=400, anchor="w")
+        self.tree.column("col_amount", width=100, anchor="e")
         self.tree.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Scrollbars for Treeview
         vsb = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        vsb.place(x=900, y=100, height=500)
+        vsb.place(x=900, y= 115, height=200)
         self.tree.configure(yscrollcommand=vsb.set)
         
         hsb = ttk.Scrollbar(self, orient="horizontal", command=self.tree.xview)
@@ -260,6 +261,7 @@ class MyApp(tk.Tk):
         if not file_path:
             messagebox.showinfo("정보", "실패")
             return
+        self.file_path = file_path
         self.var_path.set(file_path)
         self.parse_and_show(file_path)
     
@@ -312,9 +314,16 @@ class MyApp(tk.Tk):
         # DataFrame으로 변환
         df = pd.DataFrame(self.parsed_data)
         
+        default_filename = "예산보고서.xlsx"  # 기본값(파일이 없는 경우 대비)
+        if self.file_path:  # 파일 경로가 존재한다면
+            original_filename = os.path.basename(self.file_path)  # 예: '테스트입니다.xlsx'
+            filename_without_ext, ext = os.path.splitext(original_filename)  # ('테스트입니다', '.xlsx')
+            default_filename = f"예산보고서_{filename_without_ext}{ext}"  # 예: '예산보고서_테스트입니다.xlsx'
+
         # 파일 저장 대화상자
         file_path = filedialog.asksaveasfilename(
             defaultextension=".xlsx",
+            initialfile=default_filename,  # 여기서 기본 파일명 설정
             filetypes=[("Excel files", "*.xlsx *.xls")],
             title="엑셀 파일로 내보내기"
         )
