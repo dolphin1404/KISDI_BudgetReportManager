@@ -1,11 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
+added_files = [ ("./CBNU.ico", '.')]
 a = Analysis(
     ['KISDI_Budget.py'],
-    pathex=[],
+    pathex=['C:\\CBNU_SOFT\\KISDI_BudgetManager'],
     binaries=[],
-    datas=[],
+    datas=added_files,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,4 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='./CBNU.ico'
 )

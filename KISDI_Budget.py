@@ -1,14 +1,16 @@
 import sys
 import os
-import io
+#import io
 
 #sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
 #sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox
+from tkinter import filedialog, ttk, messagebox, simpledialog
 import pandas as pd
 import re
+
+
 
 def add_commas(num: float) -> str:
     """정수나 실수를 천 단위마다 콤마로 구분하여 문자열로 반환합니다."""
@@ -181,8 +183,8 @@ def build_final_report(parsed_list):
 class MyApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("예산 보고서 추출기")
-        self.geometry("930x700")
+        self.title("예산 보고서 추출기 [충북대 소프트웨어학부 이규민, 윤준식]")
+        self.geometry("800x700")
         
         # 파일 경로 표시
         lbl_file = tk.Label(self, text="엑셀 파일 경로:")
@@ -200,56 +202,83 @@ class MyApp(tk.Tk):
         btn_select.pack(side="left")
         
         btn_clear = tk.Button(frm_btns, text="초기화", command=self.clear_all)
-        btn_clear.pack(side="left", padx=5)
-        
-        # 추가된 버튼들
+        btn_clear.pack(side ="left", padx=5)
+
         btn_export_excel = tk.Button(frm_btns, text="엑셀로 내보내기", command=self.export_to_excel)
         btn_export_excel.pack(side="left", padx=5)
         
         btn_copy_clipboard = tk.Button(frm_btns, text="클립보드로 복사", command=self.copy_to_clipboard)
         btn_copy_clipboard.pack(side="left", padx=5)
         
-        # Treeview: 3열 (중분류, 내용, 금액)
+        btn_export_sheet = tk.Button(frm_btns, text="기존 엑셀에 시트 추가", command=self.export_to_existing_excel)
+        btn_export_sheet.pack(side="left", padx=5)
+
+
+        # 안내 라벨
+        lbl_info = tk.Label(self, text="사용법: [파일 선택] → 엑셀 지정 → 결과 확인",
+                            fg="blue")
+        lbl_info.pack(padx=10, pady=5)
+
+        # 1) Treeview와 스크롤바를 담을 프레임 생성
+        frame_tree = ttk.Frame(self)
+        frame_tree.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # 2) 프레임 내부를 grid로 배치할 수 있도록 설정
+        frame_tree.rowconfigure(0, weight=1)      # row=0(트리뷰) 늘어나도록
+        frame_tree.columnconfigure(0, weight=1)   # col=0(트리뷰) 늘어나도록
+
+        # 3) Treeview 생성
         columns = ("col_cat", "col_desc", "col_amount")
-        self.tree = ttk.Treeview(self, columns=columns, show="headings", selectmode="extended")
+        self.tree = ttk.Treeview(
+            frame_tree, 
+            columns=columns, 
+            show="headings", 
+            selectmode="extended"
+        )
         self.tree.heading("col_cat", text="중분류")
         self.tree.heading("col_desc", text="내용")
         self.tree.heading("col_amount", text="금액")
         
-        self.tree.column("col_cat", width=200, anchor="w")
-        self.tree.column("col_desc", width=400, anchor="w")
+        self.tree.column("col_cat", width=130, anchor="w")
+        self.tree.column("col_desc", width=350, anchor="w")
         self.tree.column("col_amount", width=100, anchor="e")
-        self.tree.pack(fill="both", expand=True, padx=10, pady=5)
-        
-        # Scrollbars for Treeview
-        vsb = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        vsb.place(x=900, y= 115, height=200)
+
+        # 4) grid에 배치, 가득 채우도록 sticky 설정
+        self.tree.grid(row=0, column=0, sticky="nsew")
+
+        # 5) 스크롤바 생성 및 grid 배치
+        vsb = ttk.Scrollbar(frame_tree, orient="vertical", command=self.tree.yview)
+        vsb.grid(row=0, column=1, sticky="ns") 
         self.tree.configure(yscrollcommand=vsb.set)
-        
-        hsb = ttk.Scrollbar(self, orient="horizontal", command=self.tree.xview)
-        hsb.pack(side="bottom", fill="x")
+
+        hsb = ttk.Scrollbar(frame_tree, orient="horizontal", command=self.tree.xview)
+        hsb.grid(row=1, column=0, sticky="ew")
         self.tree.configure(xscrollcommand=hsb.set)
         
-        # 최종 텍스트
+        # 최종 보고서 텍스트
+
         frame_text = tk.LabelFrame(self, text="최종 보고서 텍스트")
         frame_text.pack(fill="both", expand=True, padx=10, pady=5)
-        
+
+        # grid로 배치할 준비
+        frame_text.rowconfigure(0, weight=1)     # Text가 수직으로 늘어나도록
+        frame_text.columnconfigure(0, weight=1)  # Text가 수평으로 늘어나도록
+
+        # Text 위젯 생성
         self.txt_report = tk.Text(frame_text, wrap="none")
-        self.txt_report.pack(fill="both", expand=True)
-        
-        # Scrollbars for Text widget
+        self.txt_report.grid(row=0, column=0, sticky="nsew")
+
+        # 수직 스크롤바
         txt_vsb = ttk.Scrollbar(frame_text, orient="vertical", command=self.txt_report.yview)
-        txt_vsb.pack(side="right", fill="y")
+        txt_vsb.grid(row=0, column=1, sticky="ns")
         self.txt_report.configure(yscrollcommand=txt_vsb.set)
-        
+
+        # 수평 스크롤바
         txt_hsb = ttk.Scrollbar(frame_text, orient="horizontal", command=self.txt_report.xview)
-        txt_hsb.pack(side="bottom", fill="x")
+        txt_hsb.grid(row=1, column=0, sticky="ew")
         self.txt_report.configure(xscrollcommand=txt_hsb.set)
         
-        # 안내 라벨
-        lbl_info = tk.Label(self, text="사용법: [파일 선택] → 엑셀 지정 → 결과 확인\nPyInstaller 등으로 exe 빌드 가능.",
-                            fg="blue")
-        lbl_info.pack(padx=10, pady=5)
+        
         
         self.parsed_data = []
     
@@ -335,7 +364,7 @@ class MyApp(tk.Tk):
             messagebox.showinfo("성공", f"데이터를 성공적으로 '{file_path}'에 저장했습니다.")
         except Exception as e:
             messagebox.showerror("저장 오류", f"엑셀 파일로 저장하는 중 오류가 발생했습니다.\n{e}")
-    
+
     def copy_to_clipboard(self):
         if not self.parsed_data:
             messagebox.showinfo("정보", "복사할 데이터가 없습니다.")
@@ -352,6 +381,35 @@ class MyApp(tk.Tk):
             messagebox.showinfo("성공", "데이터가 클립보드에 복사되었습니다.")
         except Exception as e:
             messagebox.showerror("복사 오류", f"클립보드로 복사하는 중 오류가 발생했습니다.\n{e}")
+
+    def export_to_existing_excel(self):
+        """
+        기존 엑셀 파일에 '새 시트'를 만들어 데이터를 추가로 내보내기
+        """
+        if not self.parsed_data:
+            messagebox.showinfo("정보", "내보낼 데이터가 없습니다.")
+            return
+        
+        if not hasattr(self, 'file_path') or not self.file_path:
+            messagebox.showinfo("정보", "먼저 엑셀 파일을 선택하세요.")
+            return
+
+        # DataFrame 변환
+        df = pd.DataFrame(self.parsed_data)
+
+        sheet_name = "예산보고서"
+
+        # 1) 기존 엑셀 파일 경로 선택
+        existing_file = self.file_path  # 사용자가 이미 선택한 파일 경로
+        try:
+            with pd.ExcelWriter(existing_file, 
+                                engine="openpyxl", 
+                                mode="a", 
+                                if_sheet_exists="new") as writer:
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
+            messagebox.showinfo("성공", f"기존 파일 '{existing_file}'에 시트 '{sheet_name}'로 저장했습니다.")
+        except Exception as e:
+            messagebox.showerror("저장 오류", f"엑셀 파일에 새 시트를 추가하는 중 오류가 발생했습니다.\n{e}")
 
 if __name__ == "__main__":
     # pyperclip 설치 여부 확인
