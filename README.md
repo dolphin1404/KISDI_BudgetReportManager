@@ -11,7 +11,7 @@ This project focuses on managing and Excel files through an interactive user int
 
 ## Getting Started
 ### Prerequisites
-- Python 3.x
+- Python 3.13 (Recommend version)
 - Required libraries:
   - ```openpyxl``` for working with Excel files
   - ```tkinter``` for the graphical user interface (GUI)
