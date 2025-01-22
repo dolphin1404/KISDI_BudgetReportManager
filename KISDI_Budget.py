@@ -1,7 +1,8 @@
 import sys
 import os
 
-#  
+# 깃허브 주소입니다.
+# https://github.com/dolphin1404/KISDI_BudgetReportManager 
 
 # 터미널에서 디버그 한글 깨짐 현상 해결용용
 #import io
