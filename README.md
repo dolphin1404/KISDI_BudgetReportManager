@@ -28,11 +28,13 @@ pip install openpyxl pandas tkinter pyinstaller
    ```
    git clone https://github.com/dolphin1404/KISDI_BudgetReportManager.git
    ```
-2. Navigate to the project directory:
+   However, it would not run on your computer, if you run this file on your organization computer or server that don't allow SSL peer Certificate or SSH remote key.
+   If you are on above situation, check your organization's share repository.
+3. Navigate to the project directory:
    ```
    cd KISDI_BudgetReportManager
    ```
-3. Run the main application:
+4. Run the main application:
    ```
    python KISDI_Budget.py  
    ```
