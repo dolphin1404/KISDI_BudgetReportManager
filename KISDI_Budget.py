@@ -1,12 +1,16 @@
 import sys
 import os
-#import io
 
+#  
+
+# 터미널에서 디버그 한글 깨짐 현상 해결용용
+#import io
 #sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
 #sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 
+
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox, simpledialog
+from tkinter import filedialog, ttk, messagebox
 import pandas as pd
 import re
 
@@ -213,6 +217,9 @@ class MyApp(tk.Tk):
         btn_export_sheet = tk.Button(frm_btns, text="기존 엑셀에 시트 추가", command=self.export_to_existing_excel)
         btn_export_sheet.pack(side="left", padx=5)
 
+        btn_export_sheet = tk.Button(frm_btns, text="여러 엑셀에 시트 추가", command=self.process_multiple_files)
+        btn_export_sheet.pack(side="left", padx=5)
+
 
         # 안내 라벨
         lbl_info = tk.Label(self, text="사용법: [파일 선택] → 엑셀 지정 → 결과 확인",
@@ -397,7 +404,7 @@ class MyApp(tk.Tk):
         # DataFrame 변환
         df = pd.DataFrame(self.parsed_data)
 
-        sheet_name = "예산보고서"
+        sheet_name = "예산보고서" # 시트 이름은 원하시는대로 지정해주시면 될 것 같습니다.
 
         # 1) 기존 엑셀 파일 경로 선택
         existing_file = self.file_path  # 사용자가 이미 선택한 파일 경로
@@ -410,14 +417,31 @@ class MyApp(tk.Tk):
             messagebox.showinfo("성공", f"기존 파일 '{existing_file}'에 시트 '{sheet_name}'로 저장했습니다.")
         except Exception as e:
             messagebox.showerror("저장 오류", f"엑셀 파일에 새 시트를 추가하는 중 오류가 발생했습니다.\n{e}")
+    
+    # 여러 파일을 선택하고 각 파일에 대해 시트를 추가하는 함수
+    def process_multiple_files(self):
+        # 파일 다이얼로그를 통해 여러 파일 선택
+        file_paths = filedialog.askopenfilenames(title="파일 선택", filetypes=[("Excel Files", "*.xlsx;*.xls")])
+    
+        for file_path in file_paths:
+            self.file_path = file_path
+            self.var_path.set(file_path)
+            self.parse_and_show(file_path)
+
+            #parsed_data = parse_excel(file_path)
+            #self.parsed_data = parsed_data  # 각 파일의 데이터를 self.parsed_data에 저장
+            self.file_path = file_path  # 해당 파일 경로 저장
+            self.export_to_existing_excel()  # 저장 함수 호출
+    
 
 if __name__ == "__main__":
     # pyperclip 설치 여부 확인
+    # 오류 발생 시, 클립보드 복사 기능이기에 사용안하시면 삭제해도 괜찮습니다.
     try:
         import pyperclip
     except ImportError:
         messagebox.showerror("라이브러리 오류", "pyperclip 라이브러리가 설치되지 않았습니다.\n명령어: pip install pyperclip")
-        sys.exit(1)
+        sys.exit(1) # 프로그램 종료 코드로 오류발생시 주석 처리 후 시도해보세요.
     
     app = MyApp()
     app.mainloop()
