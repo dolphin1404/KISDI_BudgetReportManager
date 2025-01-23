@@ -1,12 +1,17 @@
 import sys
 import os
-#import io
 
+# 깃허브 주소입니다.
+# https://github.com/dolphin1404/KISDI_BudgetReportManager 
+
+# 터미널에서 디버그 한글 깨짐 현상 해결용용
+#import io
 #sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
 #sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 
+
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox, simpledialog
+from tkinter import filedialog, ttk, messagebox
 import pandas as pd
 import re
 
@@ -91,10 +96,10 @@ def parse_excel(file_path):
     for idx, row in needed.iterrows():
         raw_cat = str(row["raw_cat"]).strip() if pd.notna(row["raw_cat"]) else ""
 
-        if re.match(r"^\d+\)", raw_cat):  # 중분류인지 확인
+        if re.match(r"^\d+\)", raw_cat):  # 중분류인지 확인  ")" 닫는 괄호로 판단함
             cat_counter += 1
             middle_name = re.sub(r"^\d+\)", "", raw_cat).strip()
-            final_label = f"{cat_counter}. {middle_name}"
+            final_label = f"{cat_counter}. {middle_name}" # 
             if final_label not in group_dict:
                 group_dict[final_label] = {"items": [], "total": 0}
             continue
@@ -207,17 +212,31 @@ class MyApp(tk.Tk):
         btn_export_excel = tk.Button(frm_btns, text="엑셀로 내보내기", command=self.export_to_excel)
         btn_export_excel.pack(side="left", padx=5)
         
-        btn_copy_clipboard = tk.Button(frm_btns, text="클립보드로 복사", command=self.copy_to_clipboard)
-        btn_copy_clipboard.pack(side="left", padx=5)
-        
         btn_export_sheet = tk.Button(frm_btns, text="기존 엑셀에 시트 추가", command=self.export_to_existing_excel)
         btn_export_sheet.pack(side="left", padx=5)
 
-
         # 안내 라벨
-        lbl_info = tk.Label(self, text="사용법: [파일 선택] → 엑셀 지정 → 결과 확인",
-                            fg="blue")
+        lbl_info = tk.Label(self, text="<단독 파일 처리>", fg="blue", font=("굴림", 10, "bold"))
         lbl_info.pack(padx=10, pady=5)
+        lbl_info = tk.Label(self, text="[파일 선택] → 엑셀 파일 선택 → 결과 확인 → [엑셀로 내보내기] 혹은 [기존 엑셀에 시트 추가] → 예산보고서 생성됨",
+                            fg="black")
+        lbl_info.pack(padx=10, pady=5)
+
+
+        # 엑셀 추출 버튼들
+        export_btns = tk.Frame(self)
+        export_btns.pack(anchor="w", padx=10, pady=5)
+        btn_export_sheet_multi = tk.Button(export_btns, text="여러 엑셀에 각 시트 추가", command=self.process_multiple_files)
+        btn_export_sheet_multi.pack(side="left", padx=5)
+
+        btn_export_sheet_multi_2_one = tk.Button(export_btns, text="여러 엑셀에서 한 파일로 내보내기", command=self.process_multiple_files_2_one)
+        btn_export_sheet_multi_2_one.pack(side="left", padx=5)
+        
+        lbl_info2 = tk.Label(self, text="<복수 파일 처리>", fg="blue", font=("굴림", 10, "bold"))
+        lbl_info2.pack(padx=10, pady=5)
+        lbl_info2 = tk.Label(self, text="[여러 엑셀에 각 시트 추가]는 엑셀 파일 각각에 \"예산보고서\"시트를 추가합니다.\n\n[여러 엑셀에서 한 파일로 내보내기]는 먼저 저장할 파일 이름을 정한 후, \n여러 엑셀 파일을 선택하고 한 파일에 모든 예산보고서를 추가합니다.",
+                            fg="black")
+        lbl_info2.pack(padx=10, pady=5)
 
         # 1) Treeview와 스크롤바를 담을 프레임 생성
         frame_tree = ttk.Frame(self)
@@ -365,23 +384,6 @@ class MyApp(tk.Tk):
         except Exception as e:
             messagebox.showerror("저장 오류", f"엑셀 파일로 저장하는 중 오류가 발생했습니다.\n{e}")
 
-    def copy_to_clipboard(self):
-        if not self.parsed_data:
-            messagebox.showinfo("정보", "복사할 데이터가 없습니다.")
-            return
-        
-        # DataFrame으로 변환
-        df = pd.DataFrame(self.parsed_data)
-        
-        # 탭으로 구분된 문자열 생성
-        data_str = df.to_csv(sep='\t', index=False)
-        
-        try:
-            pyperclip.copy(data_str)
-            messagebox.showinfo("성공", "데이터가 클립보드에 복사되었습니다.")
-        except Exception as e:
-            messagebox.showerror("복사 오류", f"클립보드로 복사하는 중 오류가 발생했습니다.\n{e}")
-
     def export_to_existing_excel(self):
         """
         기존 엑셀 파일에 '새 시트'를 만들어 데이터를 추가로 내보내기
@@ -397,7 +399,7 @@ class MyApp(tk.Tk):
         # DataFrame 변환
         df = pd.DataFrame(self.parsed_data)
 
-        sheet_name = "예산보고서"
+        sheet_name = "예산보고서" # 시트 이름은 원하시는대로 지정해주시면 될 것 같습니다.
 
         # 1) 기존 엑셀 파일 경로 선택
         existing_file = self.file_path  # 사용자가 이미 선택한 파일 경로
@@ -410,14 +412,77 @@ class MyApp(tk.Tk):
             messagebox.showinfo("성공", f"기존 파일 '{existing_file}'에 시트 '{sheet_name}'로 저장했습니다.")
         except Exception as e:
             messagebox.showerror("저장 오류", f"엑셀 파일에 새 시트를 추가하는 중 오류가 발생했습니다.\n{e}")
+    
+    # 여러 파일을 선택하고 각 파일에 대해 시트를 추가하는 함수
+    def process_multiple_files(self):
+        # 파일 다이얼로그를 통해 여러 파일 선택
+        file_paths = filedialog.askopenfilenames(title="작업할 파일들 선택", filetypes=[("Excel Files", "*.xlsx;*.xls")])
+    
+        for file_path in file_paths:
+            self.file_path = file_path
+            self.var_path.set(file_path)
+            self.parse_and_show(file_path)
+
+            #parsed_data = parse_excel(file_path)
+            #self.parsed_data = parsed_data  # 각 파일의 데이터를 self.parsed_data에 저장
+            self.export_to_existing_excel()  # 저장 함수 호출
+    
+        # 여러 엑셀 파일을 하나의 통합 파일로 저장하는 함수
+    def process_multiple_files_2_one(self):
+        """
+        여러 파일을 선택하여 하나의 통합된 엑셀 파일에 추가
+        각 파일의 이름을 각 데이터 사이에 삽입
+        """
+        default_filename = "통합예산보고서.xlsx"  # 기본값(파일이 없는 경우 대비)
+
+        # 통합 엑셀 파일 경로 설정 (새로 생성)
+        output_file = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            initialfile=default_filename,  # 여기서 기본 파일명 설정
+            filetypes=[("Excel files", "*.xlsx *.xls")],
+            title="엑셀 파일로 내보내기"
+        )
+        if not output_file:
+            messagebox.showinfo("정보", "저장할 파일을 선택하세요.")
+            return
+        
+        # 여러 파일을 선택
+        file_paths = filedialog.askopenfilenames(title="파일 선택", filetypes=[("Excel Files", "*.xlsx;*.xls")])
+
+        # 새로운 엑셀 파일에 데이터를 추가
+        with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+            start_row = 0  # 첫 번째 파일부터 시작
+            for idx, file_path in enumerate(file_paths):
+                # 각 엑셀 파일 파싱
+                parsed_data = parse_excel(file_path)
+
+                # 파일 이름을 삽입할 행 (파일 이름을 한 행으로 추가)
+                file_name = os.path.basename(file_path)
+                
+                # 파일 이름을 DataFrame으로 변환 (한 행 데이터로 추가)
+                file_name_row = pd.DataFrame([['파일 이름:', file_name]], columns=["구분", "내용"])
+
+                # DataFrame 처리
+                df = pd.DataFrame(parsed_data)
+
+                # 엑셀에 삽입
+                file_name_row.to_excel(writer, index=False, header=False, startrow=start_row, sheet_name="통합데이터")
+                df.to_excel(writer, index=False, header=(start_row == 0), startrow=start_row + 1, sheet_name="통합데이터")
+                
+                # 파일을 저장한 후, 다음 데이터를 위한 행 이동
+                start_row += len(df) + 2  # 파일 이름을 위한 1행과 데이터 행을 포함한 크기만큼 증가
+
+        messagebox.showinfo("성공", "여러 엑셀 파일이 통합되었습니다.")
+
 
 if __name__ == "__main__":
     # pyperclip 설치 여부 확인
+    # 오류 발생 시, 클립보드 복사 기능이기에 사용안하시면 삭제해도 괜찮습니다.
     try:
         import pyperclip
     except ImportError:
         messagebox.showerror("라이브러리 오류", "pyperclip 라이브러리가 설치되지 않았습니다.\n명령어: pip install pyperclip")
-        sys.exit(1)
+        sys.exit(1) # 프로그램 종료 코드로 오류발생시 주석 처리 후 시도해보세요.
     
     app = MyApp()
     app.mainloop()
